@@ -5,11 +5,14 @@ import com.reactive.webflux.person.aplication.dto.GenericResponse;
 import com.reactive.webflux.person.domain.inputport.InputPerson;
 import com.reactive.webflux.person.domain.model.Person;
 import com.reactive.webflux.person.infraestructure.message.Message;
+import org.springframework.http.MediaType;
+import org.springframework.web.reactive.function.server.ServerRequest;
+import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
 import java.util.stream.Stream;
 
-public class PersonHandler implements GenericHandlers<Person> {
+public class PersonHandler implements GenericHandlers {
     private final InputPerson inputPerson;
     private final Message message;
 
@@ -20,30 +23,46 @@ public class PersonHandler implements GenericHandlers<Person> {
 
 
     @Override
-    public Mono<GenericResponse<Person>> save(Person person) {
-        return inputPerson.save(person).flatMap(updatePerson -> {
-            GenericResponse<Person> response = GenericResponse.success();
-            response.setData(Stream.of(updatePerson));
-            response.setStatus(200);
-            response.setDescription(message.getCreate());
-            return Mono.just(response);
-        });
+    public Mono<ServerResponse> save(ServerRequest request) {
+        Mono<GenericResponse<Person>> responseMono = request.bodyToMono(Person.class)
+                .flatMap(person -> inputPerson.save(person)
+                        .flatMap(savePerson -> {
+                            GenericResponse<Person> response = GenericResponse.success();
+                            response.setData(Stream.of(savePerson));
+                            response.setDescription(message.getCreate());
+                            response.setStatus(201);
+                            return Mono.just(response);
+                        })
+                );
+
+        return ServerResponse.status(201)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(responseMono, GenericResponse.class);
     }
 
     @Override
-    public Mono<GenericResponse<Person>> update(Person person) {
-        return inputPerson.update(person).flatMap(updatePerson -> {
-            GenericResponse<Person> response = GenericResponse.success();
-            response.setData(Stream.of(updatePerson));
-            response.setStatus(200);
-            response.setDescription(message.getUpdate());
-            return Mono.just(response);
-        });
+    public Mono<ServerResponse> update(ServerRequest request) {
+        Mono<GenericResponse<Person>> responseMono = request.bodyToMono(Person.class)
+                .flatMap(person -> inputPerson.update(person)
+                        .flatMap(updatePerson -> {
+                            GenericResponse<Person> response = GenericResponse.success();
+                            response.setData(Stream.of(updatePerson));
+                            response.setDescription(message.getUpdate());
+                            response.setStatus(200);
+                            return Mono.just(response);
+                        })
+                );
+
+        return ServerResponse.status(200)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(responseMono, GenericResponse.class);
     }
 
     @Override
-    public Mono<GenericResponse<Person>> delete(Integer id) {
-        return inputPerson.delete(id).flatMap(delete -> {
+    public Mono<ServerResponse> delete(ServerRequest request) {
+        int id = Integer.parseInt(request.pathVariable("id"));
+
+        Mono<GenericResponse<Person>> responseMono = inputPerson.delete(id).flatMap(delete -> {
             GenericResponse<Person> response = GenericResponse.success();
             if (delete) {
                 response.setStatus(200);
@@ -55,31 +74,45 @@ public class PersonHandler implements GenericHandlers<Person> {
             return Mono.just(response);
         });
 
+
+        return responseMono.flatMap(respons -> ServerResponse
+                .status(respons.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Mono.just(respons), GenericResponse.class)
+        );
     }
 
     @Override
-    public Mono<GenericResponse<Person>> get(Integer id) {
-        return inputPerson.get(id).flatMap(person -> {
-            GenericResponse<Person> genericResponse = GenericResponse.success();
-            genericResponse.setStatus(200);
-            genericResponse.setDescription(message.getSuccess());
-            genericResponse.setData(Stream.of(person));
+    public Mono<ServerResponse> get(ServerRequest request) {
+        int id = Integer.parseInt(request.pathVariable("id"));
 
-            return Mono.just(genericResponse);
+        Mono<GenericResponse<Person>> responseMono = inputPerson.get(id).flatMap(person -> {
+            GenericResponse<Person> response = GenericResponse.success();
+            response.setStatus(200);
+            response.setDescription(message.getSuccess());
+            response.setData(Stream.of(person));
+            return Mono.just(response);
         });
+
+        return ServerResponse.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(responseMono, GenericResponse.class);
+
     }
 
     @Override
-    public Mono<GenericResponse<Person>> getAll() {
+    public Mono<ServerResponse> getAll(ServerRequest request) {
 
-        return inputPerson.getAll().collectList().flatMap(personList -> {
-            GenericResponse<Person> genericResponse = GenericResponse.success();
-
-            genericResponse.setData(personList.stream());
-            genericResponse.setDescription(message.getSuccess());
-            genericResponse.setStatus(200);
-
-            return Mono.just(genericResponse);
+        Mono<GenericResponse<Person>> responseMono = inputPerson.getAll().collectList().flatMap(persons -> {
+            GenericResponse<Person> response = GenericResponse.success();
+            response.setStatus(200);
+            response.setDescription(message.getSuccess());
+            response.setData(persons.stream());
+            return Mono.just(response);
         });
+
+        return ServerResponse.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(responseMono, GenericResponse.class);
     }
 }

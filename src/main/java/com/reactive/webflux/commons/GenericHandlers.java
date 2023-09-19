@@ -1,12 +1,13 @@
 package com.reactive.webflux.commons;
 
-import com.reactive.webflux.person.aplication.dto.GenericResponse;
+import org.springframework.web.reactive.function.server.ServerRequest;
+import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
-public interface GenericHandlers<T>{
-    Mono<GenericResponse<T>> save(T t);
-    Mono<GenericResponse<T>> update(T t);
-    Mono<GenericResponse<T>> delete(Integer id);
-    Mono<GenericResponse<T>> get(Integer id);
-    Mono<GenericResponse<T>> getAll();
+public interface GenericHandlers{
+    Mono<ServerResponse> save(ServerRequest request);
+    Mono<ServerResponse> update(ServerRequest request);
+    Mono<ServerResponse> delete(ServerRequest request);
+    Mono<ServerResponse> get(ServerRequest request);
+    Mono<ServerResponse> getAll(ServerRequest request);
 }
