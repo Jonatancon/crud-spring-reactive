@@ -47,4 +47,9 @@ public class PersonRepositoryImpl implements OutPutPersonRepository {
     public Flux<Person> getAll() {
         return dao.findAll().map(mapper::personEntityToPerson);
     }
+
+    @Override
+    public Mono<Boolean> exitsPerson(Integer id) {
+        return dao.existsPersonEntityById(id);
+    }
 }

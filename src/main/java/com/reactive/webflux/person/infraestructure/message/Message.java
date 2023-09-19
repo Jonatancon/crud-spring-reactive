@@ -29,4 +29,12 @@ public class Message {
     public String getDelete() {
         return messageSource.getMessage("description.generic.delete", null, Locale.getDefault());
     }
+
+    public String getNotFound() {
+        return messageSource.getMessage("description.generic.not.found", null, Locale.getDefault());
+    }
+
+    public String getConflict() {
+        return messageSource.getMessage("description.generic.conflict", null, Locale.getDefault());
+    }
 }
